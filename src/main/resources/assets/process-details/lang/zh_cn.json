@@ -1,0 +1,10 @@
+{
+	"process-details.reload.stage": "%1$s：%2$s%%（%3$s）",
+	"process-details.reload.tasks": "已准备 %1$s/%2$s · 已应用 %3$s/%4$s",
+	"process-details.reload.waiting": "等待：%s",
+	"process-details.reload.stage.preparing": "正在准备资源",
+	"process-details.reload.stage.applying": "正在应用资源",
+	"process-details.reload.stage.done": "重载完成",
+	"process-details.save.line.main": "正在保存世界 · %1$s%%（%2$s）",
+	"process-details.save.line.detail": "%1$s · 区块 %2$s · 维度 %3$s/%4$s"
+}

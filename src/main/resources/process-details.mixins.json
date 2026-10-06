@@ -1,0 +1,23 @@
+{
+	"required": true,
+	"minVersion": "0.8",
+	"package": "dev.processdetails.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"plugin": "dev.processdetails.mixin.ProcessDetailsMixinPlugin",
+	"client": [
+		"LoadingOverlayMixin",
+		"SimpleReloadInstanceAccessor",
+		"GenericMessageScreenMixin",
+		"MinecraftServerMixin",
+		"ServerLevelMixin",
+		"ChunkMapMixin",
+		"xaero.GuiMapMixin",
+		"xaero.MapProcessorMixin",
+		"xaero.MapSaveLoadMixin",
+		"xaero.WorldDataHandlerMixin",
+		"xaero.WorldDataReaderMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "process-details",
+	"version": "${version}",
+	"name": "Process Details",
+	"description": "Detailed progress for Minecraft's loading processes: resource reloads (stage, task counts, pending reloaders, elapsed time), Xaero's World Map preparation (when installed) and singleplayer world saving on exit.",
+	"authors": [
+		"ZCode"
+	],
+	"contact": {},
+	"license": "MIT",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"dev.processdetails.ProcessDetails"
+		]
+	},
+	"mixins": [
+		"process-details.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "=1.21.11",
+		"java": ">=21"
+	},
+	"suggests": {
+		"xaeroworldmap": ">=1.40.16"
+	}
+}

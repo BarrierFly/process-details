@@ -1,0 +1,10 @@
+{
+	"process-details.reload.stage": "%s: %s%% (%s)",
+	"process-details.reload.tasks": "Prepared %s/%s · Applied %s/%s",
+	"process-details.reload.waiting": "Waiting for: %s",
+	"process-details.reload.stage.preparing": "Preparing resources",
+	"process-details.reload.stage.applying": "Applying resources",
+	"process-details.reload.stage.done": "Reload complete",
+	"process-details.save.line.main": "Saving world · %s%% (%s)",
+	"process-details.save.line.detail": "%s · Chunks %s · Dimension %s/%s"
+}

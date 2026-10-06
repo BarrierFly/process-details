@@ -1,0 +1,58 @@
+plugins {
+	id 'net.fabricmc.fabric-loom-remap' version '1.17-SNAPSHOT'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		name = 'Fabric'
+		url = 'https://maven.fabricmc.net/'
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	mappings loom.officialMojangMappings()
+	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// Compile against, and run with, the Xaero mods (so the mixins can target them).
+	// The dependency is optional at runtime; see fabric.mod.json "suggests".
+	modCompileOnly files("libs/xaeroworldmap-fabric-1.21.11-1.40.16.jar")
+	modCompileOnly files("libs/xaerolib-fabric-1.21.11-1.1.15.jar")
+
+	modLocalRuntime files("libs/xaeroworldmap-fabric-1.21.11-1.40.16.jar")
+	modLocalRuntime files("libs/xaerolib-fabric-1.21.11-1.1.15.jar")
+	// Xaero's World Map requires Fabric API at runtime.
+	modLocalRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+processResources {
+	inputs.property "version", project.version
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.release = 21
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
+	withSourcesJar()
+}
+
+jar {
+	from('LICENSE') {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
+}
