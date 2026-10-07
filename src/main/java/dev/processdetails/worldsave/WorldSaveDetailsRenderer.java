@@ -8,6 +8,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 
+import dev.processdetails.TextLayout;
+
 /**
  * Draws world-save progress details under the vanilla "Saving world" message
  * shown while the integrated server shuts down.
@@ -26,7 +28,6 @@ public final class WorldSaveDetailsRenderer {
 		}
 
 		Font font = Minecraft.getInstance().font;
-		int centerX = graphics.guiWidth() / 2;
 		int y = graphics.guiHeight() / 2 + MESSAGE_TEXT_GAP;
 
 		String elapsed = String.format(Locale.ROOT, "%.1fs", WorldSaveTracker.getElapsedMillis() / 1000.0F);
@@ -35,7 +36,6 @@ public final class WorldSaveDetailsRenderer {
 				WorldSaveTracker.getPercent(),
 				elapsed
 		);
-		graphics.drawCenteredString(font, mainLine, centerX, y, COLOR);
 
 		String dimension = WorldSaveTracker.getCurrentDimension();
 		if (dimension == null) {
@@ -50,6 +50,6 @@ public final class WorldSaveDetailsRenderer {
 				WorldSaveTracker.getCurrentDimensionIndex(),
 				WorldSaveTracker.getDimensionsTotal()
 		);
-		graphics.drawCenteredString(font, detailLine, centerX, y + font.lineHeight + LINE_SPACING, COLOR);
+		TextLayout.drawCenteredBlock(graphics, font, y, LINE_SPACING, COLOR, mainLine, detailLine);
 	}
 }

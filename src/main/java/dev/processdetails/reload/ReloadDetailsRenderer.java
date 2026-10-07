@@ -15,6 +15,7 @@ import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.server.packs.resources.SimpleReloadInstance;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
+import dev.processdetails.TextLayout;
 import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
 
 /**
@@ -43,7 +44,6 @@ public final class ReloadDetailsRenderer {
 		int color = ARGB.color(Math.max(alpha, 4), 255, 255, 255);
 
 		Font font = Minecraft.getInstance().font;
-		int centerX = graphics.guiWidth() / 2;
 
 		long now = Util.getMillis();
 		if (trackedReload != reload) {
@@ -60,12 +60,14 @@ public final class ReloadDetailsRenderer {
 		);
 
 		int y = barBottom + BAR_TEXT_GAP;
-		graphics.drawCenteredString(font, stageLine, centerX, y, color);
-
 		Component taskLine = buildTaskLine(reload);
+		int lineCount = taskLine != null ? 2 : 1;
+		Component[] lines = new Component[lineCount];
+		lines[0] = stageLine;
 		if (taskLine != null) {
-			graphics.drawCenteredString(font, taskLine, centerX, y + font.lineHeight + LINE_SPACING, color);
+			lines[1] = taskLine;
 		}
+		TextLayout.drawCenteredBlock(graphics, font, y, LINE_SPACING, color, lines);
 	}
 
 	private static String stageTranslationKey(ReloadInstance reload) {
