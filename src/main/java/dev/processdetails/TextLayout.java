@@ -50,6 +50,10 @@ public final class TextLayout {
 		return drawBlock(graphics, font, graphics.guiWidth() / 2, y, lineSpacing, block, true);
 	}
 
+	public static int drawCenteredBlock(GuiGraphics graphics, Font font, int y, int lineSpacing, List<Line> lines) {
+		return drawBlock(graphics, font, graphics.guiWidth() / 2, y, lineSpacing, lines, true);
+	}
+
 	/** Same layout rules as {@link #drawCenteredBlock}, but left-aligned at x. */
 	public static int drawLeftBlock(GuiGraphics graphics, Font font, int x, int y, int lineSpacing, List<Line> lines) {
 		return drawBlock(graphics, font, x, y, lineSpacing, lines, false);

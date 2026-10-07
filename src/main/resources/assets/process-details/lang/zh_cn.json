@@ -1,4 +1,5 @@
 {
+	"__comment__": "仅翻译界面措辞；renderer/version/vendor 等键名与 GPU 数据保持原样。",
 	"process-details.reload.stage": "%1$s：%2$s%%（%3$s）",
 	"process-details.reload.tasks": "已准备 %1$s/%2$s · 已应用 %3$s/%4$s",
 	"process-details.reload.waiting": "等待：%s",
@@ -6,5 +7,19 @@
 	"process-details.reload.stage.applying": "正在应用资源",
 	"process-details.reload.stage.done": "重载完成",
 	"process-details.save.line.main": "正在保存世界 · %1$s%%（%2$s）",
-	"process-details.save.line.detail": "%1$s · 区块 %2$s · 维度 %3$s/%4$s"
+	"process-details.save.line.detail": "%1$s · 区块 %2$s · 维度 %3$s/%4$s",
+	"process-details.reloader.gpuwarnlist": "GPU 警告列表",
+	"process-details.reloader.levelrenderer": "世界渲染器",
+	"process-details.reloader.regionalcompliancies": "地区合规公告",
+	"process-details.gpu.line.main.reloading": "GPU 警告列表：载入中 — %s",
+	"process-details.gpu.line.main.done": "GPU 警告列表：完成 — %s",
+	"process-details.gpu.line.inactive": "GPU 警告列表：不适用（后端 %s，仅 OpenGL 下评估）",
+	"process-details.gpu.line.warning": "· %s：%s",
+	"process-details.gpu.line.willshow": "下次进入世界时会显示警告界面",
+	"process-details.gpu.count.none": "无警告",
+	"process-details.gpu.count.one": "%s 条警告",
+	"process-details.gpu.count.many": "%s 条警告",
+	"process-details.gpu.kind.renderer": "渲染器",
+	"process-details.gpu.kind.version": "版本",
+	"process-details.gpu.kind.vendor": "供应商"
 }

@@ -12,7 +12,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ReloadInstance;
-import net.minecraft.server.packs.resources.SimpleReloadInstance;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import dev.processdetails.TextLayout;
@@ -26,6 +25,8 @@ public final class ReloadDetailsRenderer {
 	private static final int MAX_PENDING_NAMES = 3;
 	private static final int LINE_SPACING = 1;
 	private static final int BAR_TEXT_GAP = 5;
+	private static final int DETAIL_COLOR = 0xFF8A8A99;
+	private static final int WARN_COLOR = 0xFFE0B050;
 
 	private static ReloadInstance trackedReload;
 	private static long reloadStartTime = -1L;
@@ -60,14 +61,24 @@ public final class ReloadDetailsRenderer {
 		);
 
 		int y = barBottom + BAR_TEXT_GAP;
+		List<TextLayout.Line> lines = new ArrayList<>();
+		lines.add(new TextLayout.Line(stageLine, color));
+
 		Component taskLine = buildTaskLine(reload);
-		int lineCount = taskLine != null ? 2 : 1;
-		Component[] lines = new Component[lineCount];
-		lines[0] = stageLine;
 		if (taskLine != null) {
-			lines[1] = taskLine;
+			lines.add(new TextLayout.Line(taskLine, color));
 		}
-		TextLayout.drawCenteredBlock(graphics, font, y, LINE_SPACING, color, lines);
+
+		List<Component> gpuLines = new ArrayList<>();
+		GpuWarnlistStatus.appendLines(gpuLines, reload);
+		int warnColor = ARGB.color(Math.max(alpha, 4), WARN_COLOR);
+		int detailColor = ARGB.color(Math.max(alpha, 4), DETAIL_COLOR);
+		for (int i = 0; i < gpuLines.size(); i++) {
+			int lineColor = i == 0 ? warnColor : detailColor;
+			lines.add(new TextLayout.Line(gpuLines.get(i), lineColor).gapBefore(i == 0 ? 4 : 0));
+		}
+
+		TextLayout.drawCenteredBlock(graphics, font, y, LINE_SPACING, lines);
 	}
 
 	private static String stageTranslationKey(ReloadInstance reload) {
@@ -101,12 +112,11 @@ public final class ReloadDetailsRenderer {
 	}
 
 	private static Component buildPendingLine(SimpleReloadInstanceAccessor accessor) {
-		List<String> names = new ArrayList<>();
+		List<Component> names = new ArrayList<>();
 		int extra = 0;
 		for (PreparableReloadListener reloader : accessor.processdetails$getWaitingReloaders()) {
-			String name = shortenName(reloader.getName());
 			if (names.size() < MAX_PENDING_NAMES) {
-				names.add(name);
+				names.add(PrivateReloaderNames.shorten(Component.literal(reloader.getName())));
 			} else {
 				extra++;
 			}
@@ -115,16 +125,16 @@ public final class ReloadDetailsRenderer {
 			return null;
 		}
 
-		String joined = String.join(", ", names);
+		MutableComponent joined = Component.empty();
+		for (int i = 0; i < names.size(); i++) {
+			if (i > 0) {
+				joined.append(", ");
+			}
+			joined.append(names.get(i));
+		}
 		if (extra > 0) {
-			joined += " +" + extra;
+			joined.append(" +" + extra);
 		}
 		return Component.translatable("process-details.reload.waiting", joined);
-	}
-
-	private static String shortenName(String name) {
-		// Fabric API names reloaders like "id (ClassName)"; keep the id part only.
-		int paren = name.indexOf(" (");
-		return paren > 0 ? name.substring(0, paren) : name;
 	}
 }

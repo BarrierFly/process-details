@@ -6,5 +6,19 @@
 	"process-details.reload.stage.applying": "Applying resources",
 	"process-details.reload.stage.done": "Reload complete",
 	"process-details.save.line.main": "Saving world · %s%% (%s)",
-	"process-details.save.line.detail": "%s · Chunks %s · Dimension %s/%s"
+	"process-details.save.line.detail": "%s · Chunks %s · Dimension %s/%s",
+	"process-details.reloader.gpuwarnlist": "GPU warnlist",
+	"process-details.reloader.levelrenderer": "Level renderer",
+	"process-details.reloader.regionalcompliancies": "Regional compliancies",
+	"process-details.gpu.line.main.reloading": "GPU warnlist: reloading — %s",
+	"process-details.gpu.line.main.done": "GPU warnlist: done — %s",
+	"process-details.gpu.line.inactive": "GPU warnlist: inactive (backend %s, only evaluated on OpenGL)",
+	"process-details.gpu.line.warning": "· %s: %s",
+	"process-details.gpu.line.willshow": "Warning screen will appear on next world join",
+	"process-details.gpu.count.none": "no warnings",
+	"process-details.gpu.count.one": "%s warning",
+	"process-details.gpu.count.many": "%s warnings",
+	"process-details.gpu.kind.renderer": "renderer",
+	"process-details.gpu.kind.version": "version",
+	"process-details.gpu.kind.vendor": "vendor"
 }
