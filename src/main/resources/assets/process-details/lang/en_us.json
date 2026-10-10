@@ -20,5 +20,17 @@
 	"process-details.gpu.count.many": "%s warnings",
 	"process-details.gpu.kind.renderer": "renderer",
 	"process-details.gpu.kind.version": "version",
-	"process-details.gpu.kind.vendor": "vendor"
+	"process-details.gpu.kind.vendor": "vendor",
+	"process-details.colormap.grass": "Grass colormap",
+	"process-details.colormap.foliage": "Foliage colormap",
+	"process-details.colormap.dry_foliage": "Dry foliage colormap",
+	"process-details.colormap.state.loading": "reading",
+	"process-details.colormap.state.ready": "ready",
+	"process-details.colormap.phase.queued": "queued %s",
+	"process-details.colormap.phase.reading": "reading %s",
+	"process-details.colormap.phase.read_done": "read done, waiting to apply (%s)",
+	"process-details.colormap.phase.applying": "applying %s",
+	"process-details.colormap.phase.done": "done in %s",
+	"process-details.colormap.line": "%s: %s · %s from %s",
+	"process-details.colormap.line.missing": "%s: MISSING · %s (not in any active pack)"
 }

@@ -7,6 +7,8 @@
 	"client": [
 		"LoadingOverlayMixin",
 		"SimpleReloadInstanceAccessor",
+		"SimplePreparableReloadListenerMixin",
+		"ColormapReloadListenerMixin",
 		"GenericMessageScreenMixin",
 		"MinecraftServerMixin",
 		"ServerLevelMixin",

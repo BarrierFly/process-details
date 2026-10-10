@@ -21,5 +21,17 @@
 	"process-details.gpu.count.many": "%s 条警告",
 	"process-details.gpu.kind.renderer": "渲染器",
 	"process-details.gpu.kind.version": "版本",
-	"process-details.gpu.kind.vendor": "供应商"
+	"process-details.gpu.kind.vendor": "供应商",
+	"process-details.colormap.grass": "草色表",
+	"process-details.colormap.foliage": "树叶色表",
+	"process-details.colormap.dry_foliage": "枯叶色表",
+	"process-details.colormap.state.loading": "读取中",
+	"process-details.colormap.state.ready": "就绪",
+	"process-details.colormap.phase.queued": "排队 %s",
+	"process-details.colormap.phase.reading": "读取 %s",
+	"process-details.colormap.phase.read_done": "读取完成，等待应用（已等 %s）",
+	"process-details.colormap.phase.applying": "应用 %s",
+	"process-details.colormap.phase.done": "完成，总耗时 %s",
+	"process-details.colormap.line": "%s：%s · %s，取自 %s",
+	"process-details.colormap.line.missing": "%s：缺失 · %s（活动资源包中均未提供）"
 }
