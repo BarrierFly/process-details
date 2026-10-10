@@ -1,8 +1,10 @@
 package dev.processdetails.reload;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
@@ -14,6 +16,7 @@ import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ReloadInstance;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
+import dev.processdetails.ProcessDetails;
 import dev.processdetails.TextLayout;
 import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
 
@@ -28,8 +31,12 @@ public final class ReloadDetailsRenderer {
 	private static final int DETAIL_COLOR = 0xFF8A8A99;
 	private static final int WARN_COLOR = 0xFFE0B050;
 
+	private static final long FAILURE_LOG_INTERVAL_MS = 2000L;
+
 	private static ReloadInstance trackedReload;
 	private static long reloadStartTime = -1L;
+	private static boolean loggedFirstFrame;
+	private static final Map<String, Long> LAST_FAILURE_LOG = new HashMap<>();
 
 	private ReloadDetailsRenderer() {
 	}
@@ -53,22 +60,58 @@ public final class ReloadDetailsRenderer {
 		}
 		float elapsedSeconds = (now - reloadStartTime) / 1000.0F;
 
+		if (!loggedFirstFrame) {
+			loggedFirstFrame = true;
+			ProcessDetails.LOGGER.info(
+					"Reload details first frame: reload={}, simpleReloadInstance={}, opacity={}, barBottom={}, guiHeight={}, font={}",
+					describe(reload), reload instanceof SimpleReloadInstanceAccessor, opacity, barBottom,
+					graphics.guiHeight(), font);
+		}
+
+		int y = barBottom + BAR_TEXT_GAP;
+		List<TextLayout.Line> lines = new ArrayList<>();
+
 		Component stageLine = Component.translatable(
 				"process-details.reload.stage",
 				Component.translatable(stageTranslationKey(reload)),
 				Math.round(smoothProgress * 100.0F),
 				String.format(Locale.ROOT, "%.1fs", elapsedSeconds)
 		);
-
-		int y = barBottom + BAR_TEXT_GAP;
-		List<TextLayout.Line> lines = new ArrayList<>();
 		lines.add(new TextLayout.Line(stageLine, color));
 
-		Component taskLine = buildTaskLine(reload);
-		if (taskLine != null) {
-			lines.add(new TextLayout.Line(taskLine, color));
+		try {
+			Component taskLine = buildTaskLine(reload);
+			if (taskLine != null) {
+				lines.add(new TextLayout.Line(taskLine, color));
+			}
+		} catch (Throwable failure) {
+			logFailure("tasks", failure);
 		}
 
+		try {
+			appendGpuLines(lines, reload, alpha);
+		} catch (Throwable failure) {
+			logFailure("gpu", failure);
+		}
+
+		try {
+			ColormapStatus.appendLines(lines, reload, ARGB.color(Math.max(alpha, 4), DETAIL_COLOR),
+					ARGB.color(Math.max(alpha, 4), ColormapStatus.MISSING_COLOR));
+		} catch (Throwable failure) {
+			logFailure("colormap", failure);
+		}
+
+		try {
+			TextLayout.drawCenteredBlock(graphics, font, y, LINE_SPACING, lines);
+		} catch (Throwable failure) {
+			logFailure("draw", failure);
+			return;
+		}
+
+		ProcessDetails.LOGGER.debug("Reload details submitted {} line(s) at y={}", lines.size(), y);
+	}
+
+	private static void appendGpuLines(List<TextLayout.Line> lines, ReloadInstance reload, int alpha) {
 		List<Component> gpuLines = new ArrayList<>();
 		GpuWarnlistStatus.appendLines(gpuLines, reload);
 		int warnColor = ARGB.color(Math.max(alpha, 4), WARN_COLOR);
@@ -77,8 +120,19 @@ public final class ReloadDetailsRenderer {
 			int lineColor = i == 0 ? warnColor : detailColor;
 			lines.add(new TextLayout.Line(gpuLines.get(i), lineColor).gapBefore(i == 0 ? 4 : 0));
 		}
+	}
 
-		TextLayout.drawCenteredBlock(graphics, font, y, LINE_SPACING, lines);
+	private static void logFailure(String section, Throwable failure) {
+		long now = Util.getMillis();
+		Long lastLogged = LAST_FAILURE_LOG.get(section);
+		if (lastLogged == null || now - lastLogged >= FAILURE_LOG_INTERVAL_MS) {
+			LAST_FAILURE_LOG.put(section, now);
+			ProcessDetails.LOGGER.error("Reload detail section '{}' failed; its lines are missing this frame", section, failure);
+		}
+	}
+
+	private static String describe(ReloadInstance reload) {
+		return reload == null ? "null" : reload.getClass().getName();
 	}
 
 	private static String stageTranslationKey(ReloadInstance reload) {
