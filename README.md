@@ -19,6 +19,14 @@ under the vanilla progress bar on the Mojang splash screen:
 - **Line 2** – prepared/applied task counts, plus the reloaders that are still
   pending (e.g. `model_loader`, `sprite_uploader`), so you can see exactly what
   is taking so long.
+- **Colormap section** – one line per biome color map (grass, foliage, dry
+  foliage) with its live state and the resource-pack chain behind its texture
+  (e.g. `file/MyPack ← vanilla`). While a colormap is queued or waiting, the
+  line says what it is waiting for instead of hiding it: queued colormaps show
+  that they are waiting for an idle background prepare thread (with the live
+  worker load, e.g. `3 of 7 busy`), and read-but-not-yet-applied colormaps
+  show whether all reloaders still have to finish reading and whether it is
+  their turn to apply yet (vanilla runs applies one reloader at a time).
 
 Reloaders registered through Fabric API show their Fabric id instead of an
 obfuscated class name.

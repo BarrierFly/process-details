@@ -24,6 +24,8 @@ libs/                        Xaero mod jars needed to compile/run (NOT committed
 src/main/java/dev/processdetails/
   ProcessDetails.java        Mod initializer + logger
   reload/ReloadDetailsRenderer.java     Vanilla reload detail lines
+  reload/ColormapStatus.java       Per-colormap state, waits and pack chain
+  reload/ColormapPhaseTracker.java      Per-colormap stage timestamps
   worldsave/
     WorldSaveTracker.java    Thread-safe save session state (server thread writes)
     WorldSaveDetailsRenderer.java     Drawn on the vanilla "Saving world" screen
