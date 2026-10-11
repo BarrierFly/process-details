@@ -23,6 +23,7 @@ import net.minecraft.util.Util;
 import dev.processdetails.ProcessDetails;
 import dev.processdetails.TextLayout;
 import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
+import dev.processdetails.reload.PrepareRunTracker;
 
 /**
  * Load-chain and stage details for the three vanilla biome color maps
@@ -43,9 +44,10 @@ import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
  *       submission queue in FIFO order — an idle worker would pick the head
  *       task at once, so a sustained wait happens while every worker grinds
  *       through earlier prepare tasks. The line therefore reports how many
- *       submitted tasks are still pending plus the live worker load; both
- *       are per-frame snapshots (a task can start between two frames, which
- *       reads as a clear queue).</li>
+ *       submitted tasks are still pending, which task is currently at the
+ *       front of the drain (the next one likely to free a worker), and the
+ *       live worker load; all of it is per-frame snapshots (a task can start
+ *       between two frames, which reads as a clear queue).</li>
  *   <li><b>Read done</b> — prepare finished; the listener leaves vanilla's
  *       {@code preparingListeners} at that point (the set tracks unfinished
  *       prepares, not pending applies), but its apply still waits for
@@ -171,7 +173,13 @@ public final class ColormapStatus {
 				return List.of(Component.translatable("process-details.colormap.workers.none"));
 			}
 			if (pending != null && pending > 0) {
-				return List.of(Component.translatable("process-details.colormap.workers.queue.pending", pending, busy, max));
+				List<Component> waits = new ArrayList<>(2);
+				waits.add(Component.translatable("process-details.colormap.workers.queue.pending", pending, busy, max));
+				String front = PrepareRunTracker.frontmostName();
+				if (front != null && !front.isBlank()) {
+					waits.add(Component.translatable("process-details.colormap.workers.front", front));
+				}
+				return List.copyOf(waits);
 			}
 			if (pending != null) {
 				// Nothing left in the submission queue: our task was picked up

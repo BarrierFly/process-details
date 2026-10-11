@@ -35,6 +35,7 @@
 	"process-details.colormap.wait.apply_turn": "waiting: apply turn",
 	"process-details.colormap.workers.queue.pending": "behind %s queued prepare task(s) (%s/%s threads busy)",
 	"process-details.colormap.workers.queue.clear": "queue drained, prepare starting (%s/%s threads busy)",
+	"process-details.colormap.workers.front": "front task: %s",
 	"process-details.colormap.workers.idle": "waiting for an idle prepare thread",
 	"process-details.colormap.workers.busy": "waiting for an idle prepare thread (%s of %s busy)",
 	"process-details.colormap.workers.sole": "waiting for the single prepare thread (busy)",

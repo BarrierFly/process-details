@@ -23,8 +23,9 @@ under the vanilla progress bar on the Mojang splash screen:
   foliage) with its live state and the resource-pack chain behind its texture
   (e.g. `file/MyPack ← vanilla`). A queued colormap drops the chain and shows
   what it is waiting for instead: how many submitted prepare tasks are still
-  ahead of it in vanilla's shared background pool, plus the live worker load
-  (e.g. `behind 4 queued prepare task(s) (7/7 threads busy)`). A read-but-not-
+  ahead of it in vanilla's shared background pool, which task is currently at
+  the front of the drain, and the live worker load (e.g. `behind 4 queued
+  prepare task(s) (7/7 threads busy) · front task: model_loader`). A read-but-not-
   applied colormap shows whether all reloaders have finished reading and
   whether its own apply turn has come (vanilla applies one reloader at a
   time).
