@@ -21,15 +21,35 @@ under the vanilla progress bar on the Mojang splash screen:
   is taking so long.
 - **Colormap section** – one line per biome color map (grass, foliage, dry
   foliage) with its live state and the resource-pack chain behind its texture
-  (e.g. `file/MyPack ← vanilla`). While a colormap is queued or waiting, the
-  line says what it is waiting for instead of hiding it: queued colormaps show
-  that they are waiting for an idle background prepare thread (with the live
-  worker load, e.g. `3 of 7 busy`), and read-but-not-yet-applied colormaps
-  show whether all reloaders still have to finish reading and whether it is
-  their turn to apply yet (vanilla runs applies one reloader at a time).
+  (e.g. `file/MyPack ← vanilla`). A queued colormap drops the chain and shows
+  what it is waiting for instead: how many submitted prepare tasks are still
+  ahead of it in vanilla's shared background pool, plus the live worker load
+  (e.g. `behind 4 queued prepare task(s) (7/7 threads busy)`). A read-but-not-
+  applied colormap shows whether all reloaders have finished reading and
+  whether its own apply turn has come (vanilla applies one reloader at a
+  time).
 
 Reloaders registered through Fabric API show their Fabric id instead of an
 obfuscated class name.
+
+### Text pipeline guard
+
+During the first resource reload of a session, `ShaderManager`'s shader source
+cache is still empty, and vanilla only preloads `pipeline/gui` and
+`pipeline/gui_textured`; `pipeline/gui_text` (the pipeline behind every font
+draw) compiles lazily on the first text draw — which fails, logging
+`Couldn't find source for VERTEX shader (minecraft:core/rendertype_text)` and
+`Couldn't compile pipeline minecraft:pipeline/gui_text`. The invalid pipeline
+stays cached and subsequent font draws silently no-op outside the IDE.
+
+Before drawing detail text, the mod precompiles `gui_text` the same way
+`preloadUiShader` does (from the current pack stack first, falling back to the
+vanilla pack), so the error no longer appears and the detail lines render as
+soon as fonts are applied. It also logs diagnostics: the effective pack chain
+in priority order and which pack actually serves
+`shaders/core/rendertype_text.vsh/.fsh`. If the pipeline still cannot compile,
+a WARN-level diagnostic is logged to help pinpoint the pack that broke the
+shader.
 
 ### World save details (new)
 

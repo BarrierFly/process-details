@@ -34,10 +34,13 @@
 	"process-details.colormap.phase.done": "完成，总耗时 %s",
 	"process-details.colormap.wait.reading_all": "等待：全部重载器读取完成",
 	"process-details.colormap.wait.apply_turn": "等待：轮到本项应用",
+	"process-details.colormap.workers.queue.pending": "前面还有 %s 个已提交的准备任务（%s/%s 线程忙碌）",
+	"process-details.colormap.workers.queue.clear": "队列已清空，即将开始（%s/%s 线程忙碌）",
 	"process-details.colormap.workers.idle": "等待空闲的准备线程",
 	"process-details.colormap.workers.busy": "等待空闲的准备线程（%1$s/%2$s 忙碌）",
 	"process-details.colormap.workers.sole": "等待唯一的准备线程（忙碌中）",
 	"process-details.colormap.workers.none": "等待空闲的准备线程",
 	"process-details.colormap.line": "%s：%s · %s，取自 %s",
+	"process-details.colormap.line.queued": "%s：%s",
 	"process-details.colormap.line.missing": "%s：缺失 · %s（活动资源包中均未提供）"
 }

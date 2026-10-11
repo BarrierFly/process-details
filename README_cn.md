@@ -17,12 +17,28 @@
 - **第二行** —— 已准备/已应用的任务计数,以及仍在等待的 reloader(例如
   `model_loader`、`sprite_uploader`),让你准确知道慢在哪里。
 - **色表区** —— 为每张生物群系色表(草、树叶、枯叶)显示实时状态及其贴图背后的
-  资源包链(例如 `file/MyPack ← vanilla`)。色表处于排队或等待状态时,行内直接
-  显示它在等什么,而不是只给一个状态词:排队的色表会显示正在等待空闲的后台准备
-  线程(附实时线程负载,例如 `3/7 忙碌`);读取完成但尚未应用的色表会显示是否
-  还有重载器未读完、以及是否轮到本项应用(原版一次只应用一个 reloader)。
+  资源包链(例如 `file/MyPack ← vanilla`)。排队中的色表不显示资源包链,改为
+  直接显示它在等什么:共享后台池里排在本项前面的已提交准备任务数,附实时线程
+  负载(例如 `前面还有 4 个已提交的准备任务(7/7 线程忙碌)`)。读取完成但尚未
+  应用的色表会显示是否还有重载器未读完、以及是否轮到本项应用(原版一次只应用
+  一个 reloader)。
 
 通过 Fabric API 注册的 reloader 会显示其 Fabric id,而不是混淆后的类名。
+
+### 文本管线自检
+
+启动后的首次资源重载期间,`ShaderManager` 的 shader 源缓存还是空的,而原版只为
+`pipeline/gui` 和 `pipeline/gui_textured` 做了预加载,`pipeline/gui_text`(所有字体
+绘制的管线)要等第一次画文本时才懒编译——此时必然失败,日志出现
+`Couldn't find source for VERTEX shader (minecraft:core/rendertype_text)` 和
+`Couldn't compile pipeline minecraft:pipeline/gui_text`,无效管线会被缓存,后续
+字体绘制在非 IDE 环境下全部静默跳过。
+
+本 mod 在绘制详情文本前会按 `preloadUiShader` 的方式自行预编译 `gui_text`
+(优先用当前资源包栈中的源,读取失败时回退原版包),使错误不再出现、详情文本在
+字体就绪后即可正常显示;同时在日志中记录诊断信息:生效资源包链(按优先级)以及
+`shaders/core/rendertype_text.vsh/.fsh` 实际由哪个资源包提供。若管线仍无法编译,
+会记录 WARN 级诊断以便定位是哪个包损坏了 shader。
 
 ### 世界保存详情(新增)
 

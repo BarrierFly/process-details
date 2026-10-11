@@ -31,15 +31,21 @@ import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
  * <p>Two views are combined per colormap: the pack chain behind the texture
  * file ({@code ResourceManager.getResourceStack}, effective pack first —
  * "A ← B" means B provided it but A wins), and the live stage pipeline read
- * from {@link ColormapPhaseTracker} while the listener is still queued or
- * preparing (queued → reading → waiting to apply → applying → done).</p>
+ * from {@link ColormapPhaseTracker}. While the listener is queued, the line
+ * shows the wait reason instead of the pack chain.</p>
  *
  * <p>"What am I waiting for" semantics, verified against vanilla 1.21.11
  * {@code SimpleReloadInstance} / {@code SimplePreparableReloadListener}:</p>
  * <ul>
- *   <li><b>Queued</b> — the listener's {@code reload(...)} ran, its prepare
- *       was submitted with {@code supplyAsync}, but has not started: it is
- *       waiting for an idle worker of the shared background prepare pool.</li>
+ *   <li><b>Queued</b> — the listener's {@code reload(...)} ran and submitted
+ *       its prepare with {@code supplyAsync}, but no worker has started it.
+ *       Vanilla enqueues every prepare up front and the pool drains its
+ *       submission queue in FIFO order — an idle worker would pick the head
+ *       task at once, so a sustained wait happens while every worker grinds
+ *       through earlier prepare tasks. The line therefore reports how many
+ *       submitted tasks are still pending plus the live worker load; both
+ *       are per-frame snapshots (a task can start between two frames, which
+ *       reads as a clear queue).</li>
  *   <li><b>Read done</b> — prepare finished; the listener leaves vanilla's
  *       {@code preparingListeners} at that point (the set tracks unfinished
  *       prepares, not pending applies), but its apply still waits for
@@ -56,6 +62,14 @@ public final class ColormapStatus {
 	private static final Component WAIT_APPLY_TURN = Component.translatable("process-details.colormap.wait.apply_turn");
 
 	private record Colormap(String key, Identifier location, Class<?> listener) {
+	}
+
+	/**
+	 * The rendered state of one colormap; {@code queuedOnly} marks the queued
+	 * state, whose line replaces the texture path and pack chain with the
+	 * wait reason.
+	 */
+	private record ColormapState(Component component, boolean queuedOnly) {
 	}
 
 	private static final List<Colormap> COLORMAPS = List.of(
@@ -84,67 +98,87 @@ public final class ColormapStatus {
 						Component.translatable("process-details.colormap." + colormap.key()),
 						colormap.location());
 			} else {
-				line = Component.translatable("process-details.colormap.line",
-						Component.translatable("process-details.colormap." + colormap.key()),
-						stateComponent(reload, waiting, i),
-						Component.literal(colormap.location().getPath()),
-						Component.literal(chainDisplay(stack)));
+				ColormapState state = stateComponent(reload, waiting, i);
+				if (state.queuedOnly()) {
+					line = Component.translatable("process-details.colormap.line.queued",
+							Component.translatable("process-details.colormap." + colormap.key()),
+							state.component());
+				} else {
+					line = Component.translatable("process-details.colormap.line",
+							Component.translatable("process-details.colormap." + colormap.key()),
+							state.component(),
+							Component.literal(colormap.location().getPath()),
+							Component.literal(chainDisplay(stack)));
+				}
 			}
 			lines.add(new TextLayout.Line(line, color).gapBefore(i == 0 ? 4 : 0));
 		}
 	}
 
-	private static Component stateComponent(ReloadInstance reload, Set<?> waiting, int index) {
+	private static ColormapState stateComponent(ReloadInstance reload, Set<?> waiting, int index) {
 		if (reload == null || reload.isDone()) {
-			return Component.translatable("process-details.colormap.state.ready");
+			return new ColormapState(Component.translatable("process-details.colormap.state.ready"), false);
 		}
 		ColormapPhaseTracker.Phase phase = ColormapPhaseTracker.phase(index);
 		long now = Util.getMillis();
 		if (phase.applyEnd() != ColormapPhaseTracker.NONE) {
-			return Component.translatable("process-details.colormap.phase.done", duration(phase.queuedAt(), phase.applyEnd()));
+			return new ColormapState(Component.translatable("process-details.colormap.phase.done", duration(phase.queuedAt(), phase.applyEnd())), false);
 		}
 		if (phase.applyStart() != ColormapPhaseTracker.NONE) {
-			return Component.translatable("process-details.colormap.phase.applying", duration(phase.applyStart(), now));
+			return new ColormapState(Component.translatable("process-details.colormap.phase.applying", duration(phase.applyStart(), now)), false);
 		}
 		if (phase.prepareEnd() != ColormapPhaseTracker.NONE) {
 			// The listener left preparingListeners when its prepare ended, but
 			// its apply still sits behind the remaining reloaders and the gates.
 			Component base = Component.translatable("process-details.colormap.phase.read_done", duration(phase.prepareEnd(), now));
-			return joinState(base, gateWaiters(waiting.isEmpty()));
+			return new ColormapState(joinState(base, gateWaiters(waiting.isEmpty())), false);
 		}
 		if (phase.prepareStart() != ColormapPhaseTracker.NONE) {
-			return Component.translatable("process-details.colormap.phase.reading", duration(phase.prepareStart(), now));
+			return new ColormapState(Component.translatable("process-details.colormap.phase.reading", duration(phase.prepareStart(), now)), false);
 		}
 		if (phase.queuedAt() != ColormapPhaseTracker.NONE) {
-			return joinState(Component.translatable("process-details.colormap.phase.queued", duration(phase.queuedAt(), now)),
-					backgroundExecutorState());
+			Component base = Component.translatable("process-details.colormap.phase.queued", duration(phase.queuedAt(), now));
+			return new ColormapState(joinState(base, backgroundExecutorState()), true);
 		}
 		// reload() HEAD was missed (e.g. a wrapper dispatched only its own
 		// reload); we never saw which stage the listener reached.
-		return Component.translatable("process-details.colormap.state.unknown");
+		return new ColormapState(Component.translatable("process-details.colormap.state.unknown"), false);
 	}
 
 	/**
-	 * Live load of vanilla's shared background executor (the pool that runs
-	 * every reloader's prepare step), read per frame without blocking.
-	 * Worker counts are the pool's own estimates; if the backing service
-	 * cannot report its load, the wait line degrades gracefully instead of
-	 * failing the whole detail section.
+	 * Live state of vanilla's shared background executor (the pool that runs
+	 * every reloader's prepare step), read per frame without blocking. For
+	 * ForkJoinPool — vanilla's actual pool — the pending submission count is
+	 * the direct reason a queued colormap still waits; the worker load is
+	 * context. All values are estimates; if the backing service cannot report
+	 * them, the wait line degrades gracefully instead of failing the whole
+	 * detail section.
 	 */
 	private static List<Component> backgroundExecutorState() {
 		try {
 			ExecutorService service = ((TracingExecutor) Util.backgroundExecutor()).service();
 			int busy;
 			int max;
+			Integer pending = null;
 			if (service instanceof ForkJoinPool pool) {
 				busy = pool.getActiveThreadCount();
 				max = pool.getParallelism();
+				pending = Math.max(0, pool.getQueuedSubmissionCount());
 			} else if (service instanceof ThreadPoolExecutor pool) {
 				busy = pool.getActiveCount();
 				max = pool.getMaximumPoolSize();
 			} else {
 				return List.of(Component.translatable("process-details.colormap.workers.none"));
 			}
+			if (pending != null && pending > 0) {
+				return List.of(Component.translatable("process-details.colormap.workers.queue.pending", pending, busy, max));
+			}
+			if (pending != null) {
+				// Nothing left in the submission queue: our task was picked up
+				// between frames and prepare starts on the next worker scan.
+				return List.of(Component.translatable("process-details.colormap.workers.queue.clear", busy, max));
+			}
+			// Pools without a queue-depth probe: fall back to worker load.
 			if (busy <= 0) {
 				return List.of(Component.translatable("process-details.colormap.workers.idle"));
 			}
