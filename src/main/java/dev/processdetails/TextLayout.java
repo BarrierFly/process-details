@@ -60,6 +60,7 @@ public final class TextLayout {
 	}
 
 	private static int drawBlock(GuiGraphics graphics, Font font, int x, int y, int lineSpacing, List<Line> lines, boolean centered) {
+		TextShaderGuard.ensureTextPipeline();
 		int maxWidth = Math.max(1, centered ? graphics.guiWidth() - 2 * EDGE_MARGIN : graphics.guiWidth() - x - EDGE_MARGIN);
 
 		List<List<FormattedCharSequence>> visual = new ArrayList<>(lines.size());
