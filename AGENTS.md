@@ -27,7 +27,7 @@ src/main/java/dev/processdetails/
   reload/ReloadDetailsRenderer.java     Vanilla reload detail lines
   reload/ColormapStatus.java       Per-colormap state, waits and pack chain
   reload/ColormapPhaseTracker.java      Per-colormap stage timestamps
-  reload/PrepareRunTracker.java         Prepare tasks currently running (queue front)
+  reload/PrepareOrderTracker.java       Reloader registration order of the live reload (queue front)
   worldsave/
     WorldSaveTracker.java    Thread-safe save session state (server thread writes)
     WorldSaveDetailsRenderer.java     Drawn on the vanilla "Saving world" screen
@@ -38,7 +38,7 @@ src/main/java/dev/processdetails/
     ProcessDetailsMixinPlugin.java    Gates the xaero.* mixins on mod presence
     LoadingOverlayMixin.java          Reload details (tail of drawProgressBar)
     SimpleReloadInstanceAccessor.java Exposes SimpleReloadInstance counters
-    PrepareRunMixin.java              Tracks running prepare tasks (queue front)
+    ReloadDispatchMixin.java          Captures reloader order at prepareTasks HEAD
     GenericMessageScreenMixin.java    Save details on the "Saving world" screen
     MinecraftServerMixin.java         Save session begin/finish (stopServer)
     ServerLevelMixin.java             Per-dimension save hooks

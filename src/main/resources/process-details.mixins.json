@@ -8,7 +8,7 @@
 		"LoadingOverlayMixin",
 		"SimpleReloadInstanceAccessor",
 		"SimplePreparableReloadListenerMixin",
-		"PrepareRunMixin",
+		"ReloadDispatchMixin",
 		"ColormapReloadListenerMixin",
 		"GenericMessageScreenMixin",
 		"MinecraftServerMixin",

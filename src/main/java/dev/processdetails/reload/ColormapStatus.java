@@ -23,7 +23,7 @@ import net.minecraft.util.Util;
 import dev.processdetails.ProcessDetails;
 import dev.processdetails.TextLayout;
 import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
-import dev.processdetails.reload.PrepareRunTracker;
+import dev.processdetails.reload.PrepareOrderTracker;
 
 /**
  * Load-chain and stage details for the three vanilla biome color maps
@@ -140,7 +140,7 @@ public final class ColormapStatus {
 		}
 		if (phase.queuedAt() != ColormapPhaseTracker.NONE) {
 			Component base = Component.translatable("process-details.colormap.phase.queued", duration(phase.queuedAt(), now));
-			return new ColormapState(joinState(base, backgroundExecutorState()), true);
+			return new ColormapState(joinState(base, backgroundExecutorState(waiting)), true);
 		}
 		// reload() HEAD was missed (e.g. a wrapper dispatched only its own
 		// reload); we never saw which stage the listener reached.
@@ -156,7 +156,7 @@ public final class ColormapStatus {
 	 * them, the wait line degrades gracefully instead of failing the whole
 	 * detail section.
 	 */
-	private static List<Component> backgroundExecutorState() {
+	private static List<Component> backgroundExecutorState(Set<?> preparing) {
 		try {
 			ExecutorService service = ((TracingExecutor) Util.backgroundExecutor()).service();
 			int busy;
@@ -175,7 +175,7 @@ public final class ColormapStatus {
 			if (pending != null && pending > 0) {
 				List<Component> waits = new ArrayList<>(2);
 				waits.add(Component.translatable("process-details.colormap.workers.queue.pending", pending, busy, max));
-				String front = PrepareRunTracker.frontmostName();
+				String front = PrepareOrderTracker.frontName(preparing);
 				if (front != null && !front.isBlank()) {
 					waits.add(Component.translatable("process-details.colormap.workers.front", front));
 				}
