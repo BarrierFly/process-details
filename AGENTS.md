@@ -39,6 +39,8 @@ src/main/java/dev/processdetails/
     LoadingOverlayMixin.java          Reload details (tail of drawProgressBar)
     SimpleReloadInstanceAccessor.java Exposes SimpleReloadInstance counters
     ReloadDispatchMixin.java          Captures reloader order at SimpleReloadInstance.create HEAD
+    SimplePreparableReloadListenerMixin.java  Marks simple listeners queued into a reload
+    ColormapReloadListenerMixin.java  Per-colormap prepare/apply stage timestamps
     GenericMessageScreenMixin.java    Save details on the "Saving world" screen
     MinecraftServerMixin.java         Save session begin/finish (stopServer)
     ServerLevelMixin.java             Per-dimension save hooks
@@ -71,6 +73,8 @@ JDK 21 is required.
 ./gradlew runClient    # dev client; Xaero + Fabric API are modLocalRuntime deps
 ```
 
+Add `--no-daemon --console=plain` (see **Build hygiene** below).
+
 There are no automated tests. Verify changes by running the client, (re)loading
 resources (F3+T), quitting a singleplayer world, and opening the world map.
 
@@ -88,7 +92,31 @@ resources (F3+T), quitting a singleplayer world, and opening the world map.
 
 ## Mixin rules (important)
 
-- Vanilla targets use Mojang-mapped names; Loom generates the refmap.
+- Vanilla targets use Mojang-mapped names. Loom 1.17 remaps the mixin annotation
+  strings to intermediary itself, so there is **no refmap** in the built jar; the
+  compiler will not tell you that a handler signature is wrong.
+- A handler descriptor must match the target's erased parameter list **exactly**
+  (`(target args..., L…CallbackInfo;)V`). Two ways to get this wrong:
+  - Declaring only a prefix of the target's parameters. A handler may only omit
+    them all (the "simple" descriptor, legal only when the injector captures no
+    locals) — never just some.
+  - Using `CallbackInfo` for a target that returns a value. The callback type is
+    derived from the target return type: `void` → `CallbackInfo`, anything else
+    → `CallbackInfoReturnable`. Getting it wrong fails at apply time with
+    `Invalid descriptor on …! CallbackInfoReturnable is required!`.
+  The build cannot catch either mistake; check the compiled handler with
+  `javap -p -v -classpath <jar> dev.processdetails.mixin.<Mixin>` and compare the
+  handler's `descriptor:` line with `javap -p` of the target in the intermediary
+  jar (`.gradle/caches/fabric-loom/minecraftMaven/net/minecraft/
+  minecraft-merged-intermediary/<version>…/…jar`).
+- `method = {"a", "b"}` is an OR: names that do not exist in a given target
+  simply do not match, so listing one name per target class works as long as
+  each target matches at least one of them.
+- If a needed target parameter type cannot be named from source (protected
+  nested types, unexposed generics), hook a different method with an accessible
+  signature instead of fighting it — e.g. `SimpleReloadInstance.prepareTasks`
+  takes a protected `StateFactory`, so the order capture sits on the
+  `SimpleReloadInstance.create` funnel above it.
 - Xaero target method **names** are Xaero names and are not obfuscated; they
   stay as-is. Handler parameter lists must match the target method's runtime
   descriptor exactly for the arguments you declare. Current handlers are
@@ -101,6 +129,12 @@ resources (F3+T), quitting a singleplayer world, and opening the world map.
 - Anything under `mixin/xaero/` must not be referenced from non-mixin code
   except through classes only loaded by those mixins (lazy class loading keeps
   the game working without Xaero).
+
+## Build hygiene
+
+Run Gradle as `./gradlew --no-daemon --console=plain <task>`. A long-lived daemon
+keeps the console attached and blocks the tool output here, and `org.gradle.
+jvmargs` makes even `--no-daemon` fork a single-use daemon anyway.
 
 ## License
 
