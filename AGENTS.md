@@ -28,6 +28,7 @@ src/main/java/dev/processdetails/
   reload/ColormapStatus.java       Per-colormap state, waits and pack chain
   reload/ColormapPhaseTracker.java      Per-colormap stage timestamps
   reload/PrepareOrderTracker.java       Reloader registration order of the live reload (queue front)
+  reload/AtlasStatus.java               Per-atlas stitch/upload state of minecraft:atlas
   worldsave/
     WorldSaveTracker.java    Thread-safe save session state (server thread writes)
     WorldSaveDetailsRenderer.java     Drawn on the vanilla "Saving world" screen
@@ -41,6 +42,9 @@ src/main/java/dev/processdetails/
     ReloadDispatchMixin.java          Captures reloader order at SimpleReloadInstance.create HEAD
     SimplePreparableReloadListenerMixin.java  Marks simple listeners queued into a reload
     ColormapReloadListenerMixin.java  Per-colormap prepare/apply stage timestamps
+    AtlasManagerAccessor.java          Atlas id set of AtlasManager
+    AtlasManagerMixin.java             Captures the reload's per-atlas stitch futures
+    PendingStitchResultsMixin.java     Times the GPU upload step
     GenericMessageScreenMixin.java    Save details on the "Saving world" screen
     MinecraftServerMixin.java         Save session begin/finish (stopServer)
     ServerLevelMixin.java             Per-dimension save hooks

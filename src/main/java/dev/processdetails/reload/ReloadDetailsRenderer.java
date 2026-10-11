@@ -89,6 +89,12 @@ public final class ReloadDetailsRenderer {
 		}
 
 		try {
+			AtlasStatus.appendLines(lines, ARGB.color(Math.max(alpha, 4), DETAIL_COLOR));
+		} catch (Throwable failure) {
+			logFailure("atlas", failure);
+		}
+
+		try {
 			appendGpuLines(lines, reload, alpha);
 		} catch (Throwable failure) {
 			logFailure("gpu", failure);

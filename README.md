@@ -19,6 +19,14 @@ under the vanilla progress bar on the Mojang splash screen:
 - **Line 2** – prepared/applied task counts, plus the reloaders that are still
   pending (e.g. `model_loader`, `sprite_uploader`), so you can see exactly what
   is taking so long.
+- **Atlas section** – per-atlas progress for `minecraft:atlas`
+  (`AtlasManager`), the reloader that reads and stitches every sprite texture
+  into the large atlases. Vanilla submits all of them at once, so the line
+  reports how many are still stitching plus which ones they are, and for the
+  finished ones the size they actually came out at (e.g. `blocks 8192×8192 ·
+  3120 sprites · 4.1s`) — the sprite count is what actually predicts the
+  cost. Once every atlas is stitched the line switches to the GPU upload step,
+  which vanilla's own stage line attributes to no reloader at all.
 - **Colormap section** – one line per biome color map (grass, foliage, dry
   foliage) with its live state and the resource-pack chain behind its texture
   (e.g. `file/MyPack ← vanilla`). A queued colormap drops the chain and shows

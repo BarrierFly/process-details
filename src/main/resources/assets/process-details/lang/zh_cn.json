@@ -43,5 +43,12 @@
 	"process-details.colormap.workers.none": "等待空闲的准备线程",
 	"process-details.colormap.line": "%s：%s · %s，取自 %s",
 	"process-details.colormap.line.queued": "%s：%s",
-	"process-details.colormap.line.missing": "%s：缺失 · %s（活动资源包中均未提供）"
+	"process-details.colormap.line.missing": "%s：缺失 · %s（活动资源包中均未提供）",
+	"process-details.atlas.line.main": "贴图集：%s",
+	"process-details.atlas.line.stitching": "拼接中 %s/%s · %s 项进行中",
+	"process-details.atlas.line.uploading": "正在上传 %s 张已拼接的贴图集 · %s",
+	"process-details.atlas.line.ready": "%s/%s 张已拼接，耗时 %s",
+	"process-details.atlas.line.atlas": "%s %s×%s · %s 个精灵 · %s",
+	"process-details.atlas.line.failed": "%s：拼接失败",
+	"process-details.atlas.line.pending": "仍在拼接：%s"
 }
