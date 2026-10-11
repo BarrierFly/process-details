@@ -38,7 +38,7 @@ src/main/java/dev/processdetails/
     ProcessDetailsMixinPlugin.java    Gates the xaero.* mixins on mod presence
     LoadingOverlayMixin.java          Reload details (tail of drawProgressBar)
     SimpleReloadInstanceAccessor.java Exposes SimpleReloadInstance counters
-    ReloadDispatchMixin.java          Captures reloader order at prepareTasks HEAD
+    ReloadDispatchMixin.java          Captures reloader order at SimpleReloadInstance.create HEAD
     GenericMessageScreenMixin.java    Save details on the "Saving world" screen
     MinecraftServerMixin.java         Save session begin/finish (stopServer)
     ServerLevelMixin.java             Per-dimension save hooks

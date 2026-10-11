@@ -8,8 +8,8 @@ import dev.processdetails.ProcessDetails;
 
 /**
  * Registration order of the reloaders of the most recent resource reload,
- * captured once when vanilla dispatches them ({@code prepareTasks} HEAD, on
- * the thread that starts the reload). Vanilla enqueues every prepare in list
+ * captured once when vanilla dispatches them ({@code SimpleReloadInstance.create}
+ * HEAD, on the thread that starts the reload). Vanilla enqueues every prepare in list
  * order and the background pool drains its submission queue in FIFO order,
  * so the first entry that has not finished reading is the task currently at
  * the front of the drain — the one queued reloaders are actually waiting on.
