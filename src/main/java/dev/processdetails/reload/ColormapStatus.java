@@ -23,17 +23,19 @@ import net.minecraft.util.Util;
 import dev.processdetails.ProcessDetails;
 import dev.processdetails.TextLayout;
 import dev.processdetails.mixin.SimpleReloadInstanceAccessor;
-import dev.processdetails.reload.PrepareOrderTracker;
 
 /**
  * Load-chain and stage details for the three vanilla biome color maps
  * (grass, foliage, dry foliage) behind their Fabric reloader ids.
  *
- * <p>Two views are combined per colormap: the pack chain behind the texture
- * file ({@code ResourceManager.getResourceStack}, effective pack first —
- * "A ← B" means B provided it but A wins), and the live stage pipeline read
- * from {@link ColormapPhaseTracker}. While the listener is queued, the line
- * shows the wait reason instead of the pack chain.</p>
+ * <p>Each colormap renders as a left-aligned line with the name and live
+ * stage as a fixed head, and the rest as a scrolling detail (see
+ * {@link TextLayout}): the pack chain behind the texture file
+ * ({@code ResourceManager.getResourceStack}, effective pack first —
+ * "A ← B" means B provided it but A wins) and the live stage pipeline read
+ * from {@link ColormapPhaseTracker}. While the listener is queued, the
+ * detail shows the wait reason instead of the pack chain; when the whole
+ * line still fits on screen, nothing scrolls.</p>
  *
  * <p>"What am I waiting for" semantics, verified against vanilla 1.21.11
  * {@code SimpleReloadInstance} / {@code SimplePreparableReloadListener}:</p>
@@ -67,11 +69,16 @@ public final class ColormapStatus {
 	}
 
 	/**
-	 * The rendered state of one colormap; {@code queuedOnly} marks the queued
-	 * state, whose line replaces the texture path and pack chain with the
-	 * wait reason.
+	 * The rendered state of one colormap: {@code stage} is the stage text that
+	 * stays fixed behind the colormap name, {@code waits} are the wait reasons
+	 * that scroll with the detail, and {@code queuedOnly} marks the queued
+	 * state, whose detail shows the wait reasons instead of the texture path
+	 * and pack chain.
 	 */
-	private record ColormapState(Component component, boolean queuedOnly) {
+	private record ColormapState(Component stage, List<Component> waits, boolean queuedOnly) {
+		private ColormapState(Component stage) {
+			this(stage, List.of(), false);
+		}
 	}
 
 	private static final List<Colormap> COLORMAPS = List.of(
@@ -92,59 +99,83 @@ public final class ColormapStatus {
 		for (int i = 0; i < COLORMAPS.size(); i++) {
 			Colormap colormap = COLORMAPS.get(i);
 			int color = detailColor;
-			Component line;
+			Component head;
+			Component detail;
 			List<Resource> stack = resourceManager.getResourceStack(colormap.location());
 			if (stack.isEmpty()) {
 				color = missingColor;
-				line = Component.translatable("process-details.colormap.line.missing",
-						Component.translatable("process-details.colormap." + colormap.key()),
-						colormap.location());
+				head = Component.translatable("process-details.colormap.head.missing",
+						Component.translatable("process-details.colormap." + colormap.key()));
+				detail = Component.translatable("process-details.colormap.detail.missing", colormap.location());
 			} else {
 				ColormapState state = stateComponent(reload, waiting, i);
+				head = Component.translatable("process-details.colormap.head",
+						Component.translatable("process-details.colormap." + colormap.key()),
+						state.stage());
 				if (state.queuedOnly()) {
-					line = Component.translatable("process-details.colormap.line.queued",
-							Component.translatable("process-details.colormap." + colormap.key()),
-							state.component());
+					detail = joinDetail(state.waits());
 				} else {
-					line = Component.translatable("process-details.colormap.line",
-							Component.translatable("process-details.colormap." + colormap.key()),
-							state.component(),
+					detail = joinDetail(state.waits()).append(Component.translatable(
+							"process-details.colormap.detail",
 							Component.literal(colormap.location().getPath()),
-							Component.literal(chainDisplay(stack)));
+							Component.literal(chainDisplay(stack))));
 				}
 			}
-			lines.add(new TextLayout.Line(line, color).gapBefore(i == 0 ? 4 : 0));
+			TextLayout.Line line = new TextLayout.Line(head, color).gapBefore(i == 0 ? 4 : 0);
+			lines.add(line.scrollingDetail(detail));
 		}
 	}
 
 	private static ColormapState stateComponent(ReloadInstance reload, Set<?> waiting, int index) {
 		if (reload == null || reload.isDone()) {
-			return new ColormapState(Component.translatable("process-details.colormap.state.ready"), false);
+			return new ColormapState(Component.translatable("process-details.colormap.state.ready"));
 		}
 		ColormapPhaseTracker.Phase phase = ColormapPhaseTracker.phase(index);
 		long now = Util.getMillis();
 		if (phase.applyEnd() != ColormapPhaseTracker.NONE) {
-			return new ColormapState(Component.translatable("process-details.colormap.phase.done", duration(phase.queuedAt(), phase.applyEnd())), false);
+			return new ColormapState(Component.translatable("process-details.colormap.phase.done", duration(phase.queuedAt(), phase.applyEnd())));
 		}
 		if (phase.applyStart() != ColormapPhaseTracker.NONE) {
-			return new ColormapState(Component.translatable("process-details.colormap.phase.applying", duration(phase.applyStart(), now)), false);
+			return new ColormapState(Component.translatable("process-details.colormap.phase.applying", duration(phase.applyStart(), now)));
 		}
 		if (phase.prepareEnd() != ColormapPhaseTracker.NONE) {
 			// The listener left preparingListeners when its prepare ended, but
 			// its apply still sits behind the remaining reloaders and the gates.
 			Component base = Component.translatable("process-details.colormap.phase.read_done", duration(phase.prepareEnd(), now));
-			return new ColormapState(joinState(base, gateWaiters(waiting.isEmpty())), false);
+			return new ColormapState(base, gateWaiters(waiting.isEmpty()), false);
 		}
 		if (phase.prepareStart() != ColormapPhaseTracker.NONE) {
-			return new ColormapState(Component.translatable("process-details.colormap.phase.reading", duration(phase.prepareStart(), now)), false);
+			return new ColormapState(Component.translatable("process-details.colormap.phase.reading", duration(phase.prepareStart(), now)));
 		}
 		if (phase.queuedAt() != ColormapPhaseTracker.NONE) {
 			Component base = Component.translatable("process-details.colormap.phase.queued", duration(phase.queuedAt(), now));
-			return new ColormapState(joinState(base, backgroundExecutorState(waiting)), true);
+			return new ColormapState(base, backgroundExecutorState(waiting), true);
 		}
 		// reload() HEAD was missed (e.g. a wrapper dispatched only its own
 		// reload); we never saw which stage the listener reached.
-		return new ColormapState(Component.translatable("process-details.colormap.state.unknown"), false);
+		return new ColormapState(Component.translatable("process-details.colormap.state.unknown"));
+	}
+
+	/**
+	 * What a colormap that finished reading still waits for before apply:
+	 * while any reloader is preparing, allPreparations is still incomplete and
+	 * no apply can run; once nobody is preparing, only the earlier reloaders'
+	 * apply chain (vanilla runs applies sequentially) can delay its turn.
+	 */
+	private static List<Component> gateWaiters(boolean allRead) {
+		return allRead ? List.of(WAIT_APPLY_TURN) : List.of(WAIT_READING_ALL, WAIT_APPLY_TURN);
+	}
+
+	/**
+	 * Joins wait reasons into the scrolling detail, each prefixed with the
+	 * separator so the fixed head can stay a plain stage text.
+	 */
+	private static MutableComponent joinDetail(List<Component> waits) {
+		MutableComponent joined = Component.empty();
+		for (Component wait : waits) {
+			joined.append(" · ").append(wait);
+		}
+		return joined;
 	}
 
 	/**
@@ -198,24 +229,6 @@ public final class ColormapStatus {
 			ProcessDetails.LOGGER.debug("Colormap background executor state unavailable", failure);
 			return List.of(Component.translatable("process-details.colormap.workers.none"));
 		}
-	}
-
-	/**
-	 * What a colormap that finished reading still waits for before apply:
-	 * while any reloader is preparing, allPreparations is still incomplete and
-	 * no apply can run; once nobody is preparing, only the earlier reloaders'
-	 * apply chain (vanilla runs applies sequentially) can delay its turn.
-	 */
-	private static List<Component> gateWaiters(boolean allRead) {
-		return allRead ? List.of(WAIT_APPLY_TURN) : List.of(WAIT_READING_ALL, WAIT_APPLY_TURN);
-	}
-
-	private static Component joinState(Component base, List<Component> waits) {
-		MutableComponent joined = base.copy();
-		for (Component wait : waits) {
-			joined.append(" · ").append(wait);
-		}
-		return joined;
 	}
 
 	private static String duration(long start, long end) {
