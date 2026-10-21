@@ -81,6 +81,10 @@ installed, its hard-coded "Preparing World Map..." screen is replaced by a
 detailed live view of the map pipeline: the phase stack of the most recently
 active processor thread with elapsed time, live processor state (world id,
 dimension, pause flags, region load/save queues, the region currently in view).
+If a tracked step does not change for 30 seconds (for example the map thread is
+blocked on region file I/O), a WARN entry is written to the log with the step
+name and detail (such as the region coordinates), the full step stack, live
+processor state, and the stuck thread's stack.
 If Xaero's World Map is **not** installed, this feature is skipped entirely
 (its mixins are disabled through a mixin config plugin) and everything else
 keeps working.

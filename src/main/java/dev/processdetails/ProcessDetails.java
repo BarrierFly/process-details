@@ -1,5 +1,6 @@
 package dev.processdetails;
 
+import dev.processdetails.xaero.LoadingWatchdog;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
@@ -12,6 +13,9 @@ public class ProcessDetails implements ClientModInitializer {
 	@Override
 	public void onInitializeClient() {
 		boolean xaero = FabricLoader.getInstance().isModLoaded("xaeroworldmap");
+		if (xaero) {
+			LoadingWatchdog.start();
+		}
 		LOGGER.info("Process Details initialized (Xaero's World Map: {})",
 				xaero ? "present, detailed map loading screen enabled" : "absent, map loading features disabled");
 	}

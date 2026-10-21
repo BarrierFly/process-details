@@ -19,7 +19,7 @@ import xaero.map.region.LeveledRegion;
 public final class LoadingStatus {
 	private static final int MAX_DEPTH = 32;
 	private static final Object LOCK = new Object();
-	private static final Map<String, Deque<Phase>> STACKS = new HashMap<>();
+	private static final Map<Thread, Deque<Phase>> STACKS = new HashMap<>();
 	private static volatile Phase lastPhase = null;
 
 	private LoadingStatus() {
@@ -46,9 +46,20 @@ public final class LoadingStatus {
 		}
 	}
 
+	/** The phase stack of one thread, top (most recent) first. */
+	public static final class ThreadSnapshot {
+		public final Thread thread;
+		public final List<Phase> phases;
+
+		ThreadSnapshot(Thread thread, List<Phase> phases) {
+			this.thread = thread;
+			this.phases = phases;
+		}
+	}
+
 	private static Deque<Phase> stackForCurrentThread() {
-		String name = Thread.currentThread().getName();
-		return STACKS.computeIfAbsent(name, key -> new ArrayDeque<>());
+		Thread thread = Thread.currentThread();
+		return STACKS.computeIfAbsent(thread, key -> new ArrayDeque<>());
 	}
 
 	public static void enter(String name) {
@@ -118,6 +129,20 @@ public final class LoadingStatus {
 				}
 			}
 			return best == null ? new ArrayList<>() : new ArrayList<>(best);
+		}
+	}
+
+	/** Returns a snapshot of every thread that currently has an active phase. */
+	public static List<ThreadSnapshot> snapshotAll() {
+		synchronized (LOCK) {
+			List<ThreadSnapshot> snapshots = new ArrayList<>(STACKS.size());
+			for (Map.Entry<Thread, Deque<Phase>> entry : STACKS.entrySet()) {
+				Deque<Phase> stack = entry.getValue();
+				if (!stack.isEmpty()) {
+					snapshots.add(new ThreadSnapshot(entry.getKey(), new ArrayList<>(stack)));
+				}
+			}
+			return snapshots;
 		}
 	}
 

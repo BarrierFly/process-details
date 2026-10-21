@@ -1,6 +1,7 @@
 package dev.processdetails.mixin.xaero;
 
 import dev.processdetails.xaero.LoadingStatus;
+import dev.processdetails.xaero.LoadingWatchdog;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -11,6 +12,7 @@ import xaero.map.MapProcessor;
 public class MapProcessorMixin {
 	@Inject(method = "changeWorld", at = @At("HEAD"))
 	private void pd$changeWorldHead(CallbackInfo ci) {
+		LoadingWatchdog.attach((MapProcessor) (Object) this);
 		LoadingStatus.enter("changeWorld: new world/dimension requested");
 	}
 

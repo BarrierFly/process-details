@@ -30,6 +30,7 @@ public final class LoadingScreenRenderer {
 	}
 
 	public static void render(GuiGraphics graphics, MapProcessor processor) {
+		LoadingWatchdog.attach(processor);
 		Minecraft minecraft = Minecraft.getInstance();
 		Window window = minecraft.getWindow();
 		int width = window.getGuiScaledWidth();

@@ -35,6 +35,7 @@ src/main/java/dev/processdetails/
   xaero/
     LoadingStatus.java       Thread-aware phase stack shared with the renderer
     LoadingScreenRenderer.java        Custom Xaero loading screen drawing
+    LoadingWatchdog.java     Logs full diagnostics when a step stays unchanged for 30s
   mixin/
     ProcessDetailsMixinPlugin.java    Gates the xaero.* mixins on mod presence
     LoadingOverlayMixin.java          Reload details (tail of drawProgressBar)
